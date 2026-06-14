@@ -6,6 +6,8 @@ import { BarChart, CheckSquare, BellRing, Plus, Check, Trash2, Calendar, Share2,
 const AnalyticsView = () => {
   const { 
     currentProfile, 
+    events,
+    myAttendance,
     tasks, 
     notices, 
     activeRole, 
@@ -30,26 +32,25 @@ const AnalyticsView = () => {
   const [noticeDate, setNoticeDate] = useState('');
 
   // Calculate analytics
-  const getChatsAnalytics = (profileId) => {
-    const attendance = JSON.parse(localStorage.getItem('hr_attendance') || '[]');
-    const events = JSON.parse(localStorage.getItem('hr_events') || '[]');
-    const pastEvents = events.filter(e => new Date(e.startTime) < new Date());
+  const getChatsAnalytics = () => {
+    const pastEvents = (events || []).filter(e => new Date(e.startTime || e.start_time) < new Date());
     
     if (pastEvents.length === 0) {
       return {
         eventRingPercentage: 0,
         attendedCount: 0,
         totalPastEvents: 0,
-        distribution: { Ceremony: 0, 'Community Service': 0, 'Professional Dev': 0 }
+        distribution: { Ceremony: 0, 'Community Service': 0, 'Professional Dev': 0 },
+        insights: ['No past events available for analytics yet.']
       };
     }
     
-    const userAttendance = attendance.filter(a => a.profileId === profileId);
+    const userAttendance = myAttendance || [];
     const eventRingPercentage = Math.round((userAttendance.length / pastEvents.length) * 100);
     
     const distribution = { Ceremony: 0, 'Community Service': 0, 'Professional Dev': 0 };
     userAttendance.forEach(att => {
-      const ev = events.find(e => e.id === att.eventId);
+      const ev = pastEvents.find(e => e.id === (att.eventId || att.event_id));
       if (ev && distribution[ev.tag] !== undefined) {
         distribution[ev.tag]++;
       }
@@ -68,7 +69,7 @@ const AnalyticsView = () => {
     };
   };
 
-  const analytics = getChatsAnalytics(currentProfile.id);
+  const analytics = getChatsAnalytics();
 
   // Filter Tasks
   const allMyTasks = tasks.filter(t => t.assignedTo === currentProfile.id || (t.createdBy === currentProfile.id && t.assignedTo === currentProfile.id));

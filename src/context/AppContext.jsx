@@ -8,6 +8,7 @@ import {
   noticeService, 
   notificationService,
   fetchEvents,
+  fetchMyAttendance,
   fetchTasks,
   fetchNotices,
   fetchNotifications,
@@ -36,6 +37,7 @@ export const AppProvider = ({ children }) => {
   const [notices, setNotices] = useState([]);
   const [userNotifications, setUserNotifications] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [myAttendance, setMyAttendance] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [users, setUsers] = useState([]);
   const [profiles, setProfiles] = useState([]);
@@ -65,6 +67,9 @@ export const AppProvider = ({ children }) => {
       try {
         const ev = await fetchEvents();
         setEvents(ev || []);
+        
+        const att = await fetchMyAttendance();
+        setMyAttendance(att || []);
         
         const ts = await fetchTasks();
         setTasks(ts || []);
@@ -199,6 +204,7 @@ export const AppProvider = ({ children }) => {
       dbTrigger,
       triggerUpdate,
       events,
+      myAttendance,
       tasks,
       notices,
       attendance,

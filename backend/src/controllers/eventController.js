@@ -118,3 +118,17 @@ export const getEventAttendance = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getMyAttendance = async (req, res, next) => {
+  try {
+    const { data: attendance, error } = await supabase
+      .from('hr_attendance')
+      .select('*')
+      .eq('profile_id', req.user.id);
+
+    if (error) throw error;
+    res.status(200).json({ attendance });
+  } catch (err) {
+    next(err);
+  }
+};

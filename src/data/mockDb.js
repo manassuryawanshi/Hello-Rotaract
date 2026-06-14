@@ -110,6 +110,10 @@ export const fetchEvents = async () => {
   const data = await apiClient.get('/events');
   return data.events;
 };
+export const fetchMyAttendance = async () => {
+  const data = await apiClient.get('/events/attendance/me');
+  return data.attendance;
+};
 export const fetchTasks = async () => {
   const data = await apiClient.get('/tasks');
   return data.tasks;

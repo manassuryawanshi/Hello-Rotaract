@@ -7,6 +7,8 @@ const router = express.Router();
 router.get('/', requireAuth, eventController.getAllEvents);
 router.post('/', requireAuth, requireRole(['ADMIN', 'TREASURER']), eventController.createEvent);
 
+router.get('/attendance/me', requireAuth, eventController.getMyAttendance);
+
 router.get('/:eventId/attendance', requireAuth, eventController.getEventAttendance);
 router.post('/:eventId/attendance', requireAuth, requireRole(['ADMIN']), eventController.markAttendance);
 router.delete('/:eventId/attendance/:profileId', requireAuth, requireRole(['ADMIN']), eventController.removeAttendance);
