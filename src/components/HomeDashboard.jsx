@@ -27,10 +27,12 @@ const HomeDashboard = ({ setSelectedEvent }) => {
     .sort((a, b) => new Date(a.startTime) - new Date(b.startTime));
 
   // Toggle task completion
-  const handleToggleTask = (taskId, currentStatus) => {
-    const nextStatus = currentStatus === 'COMPLETED' ? 'IN_PROGRESS' : 'COMPLETED';
-    taskService.updateTaskStatus(taskId, nextStatus);
-    triggerUpdate();
+  const handleToggleTask = async (taskId, currentStatus) => {
+    const nextStatus = currentStatus === 'PENDING' ? 'IN_PROGRESS' : currentStatus === 'IN_PROGRESS' ? 'COMPLETED' : 'PENDING';
+    try {
+      await taskService.updateTaskStatus(taskId, nextStatus);
+      triggerUpdate();
+    } catch(err) { alert(err.message); }
   };
 
   // Helper: Generates list of next 7 days starting from today

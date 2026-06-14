@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { authService, eventService, noticeService, taskService } from '../data/mockDb';
+import { eventService, noticeService, taskService } from '../data/mockDb.js';
 import { ShieldAlert, UserCheck, CalendarCheck, Check, X, Send, ClipboardList } from 'lucide-react';
 import InitialsAvatar from './InitialsAvatar';
 
@@ -22,45 +22,46 @@ const AdminDashboard = () => {
     setTimeout(() => setToastMessage(''), 3000);
   };
 
-  const handleSendNotice = () => {
+  const handleSendNotice = async () => {
     if (!noticeModal.title || !noticeModal.message) {
       showToast("Title and message are required");
       return;
     }
-    noticeService.createNotice({
-      title: noticeModal.title,
-      content: noticeModal.message
-    }, currentProfile.id);
-    
-    showToast(`Notice sent to ${noticeModal.user ? noticeModal.user.name : 'all members'}`);
-    setNoticeModal({ show: false, user: null, title: '', message: '' });
-    triggerUpdate();
+    try {
+      await noticeService.createNotice({ title: noticeModal.title, content: noticeModal.message });
+      showToast(`Notice sent to ${noticeModal.user ? noticeModal.user.name : 'all members'}`);
+      setNoticeModal({ show: false, user: null, title: '', message: '' });
+      triggerUpdate();
+    } catch (err) { alert(err.message); }
   };
 
-  const handleAssignTask = () => {
+  const handleAssignTask = async () => {
     if (!taskModal.title || !taskModal.dueDate) {
       showToast("Title and due date are required");
       return;
     }
-    taskService.createTask({
-      title: taskModal.title,
-      description: taskModal.description,
-      dueDate: new Date(taskModal.dueDate).toISOString(),
-      assignedTo: taskModal.user ? taskModal.user.id : null
-    }, currentProfile.id);
-    
-    showToast(`Task assigned to ${taskModal.user ? taskModal.user.name : 'all members'}`);
-    setTaskModal({ show: false, user: null, title: '', description: '', dueDate: '' });
-    triggerUpdate();
+    try {
+      await taskService.createTask({
+        title: taskModal.title,
+        description: taskModal.description,
+        assignedTo: taskModal.user ? taskModal.user.id : null,
+        endDate: new Date(taskModal.dueDate).toISOString()
+      });
+      showToast(`Task assigned to ${taskModal.user ? taskModal.user.name : 'all members'}`);
+      setTaskModal({ show: false, user: null, title: '', description: '', dueDate: '' });
+      triggerUpdate();
+    } catch (err) { alert(err.message); }
   };
 
-  const handleToggleAttendance = (profileId, isChecked) => {
-    if (isChecked) {
-      eventService.markAttendance(selectedEventId, profileId, currentProfile.id);
-    } else {
-      eventService.unmarkAttendance(selectedEventId, profileId);
-    }
-    triggerUpdate();
+  const handleToggleAttendance = async (profileId, isChecked) => {
+    try {
+      if (isChecked) {
+        await eventService.markAttendance(selectedEventId, profileId);
+      } else {
+        await eventService.unmarkAttendance(selectedEventId, profileId);
+      }
+      triggerUpdate();
+    } catch (err) { alert(err.message); }
   };
 
   return (

@@ -28,11 +28,11 @@ const Onboarding = () => {
   const [isAutoApproved, setIsAutoApproved] = useState(false);
   const [registeredUser, setRegisteredUser] = useState(null);
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setLoginError('');
     try {
-      login(loginId, loginPassword);
+      await login(loginId, loginPassword);
     } catch (err) {
       if (err.message === 'Awaiting Club Admin approval.') {
         const users = JSON.parse(localStorage.getItem('hr_users') || '[]');

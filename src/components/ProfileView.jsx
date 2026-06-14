@@ -67,7 +67,7 @@ const ProfileView = () => {
     e.preventDefault();
   };
 
-  const handlePaymentSubmit = (e) => {
+  const handlePaymentSubmit = async (e) => {
     e.preventDefault();
     if (!screenshot || !upiRef) {
       alert("Please provide both UPI Reference and Screenshot.");
@@ -75,14 +75,17 @@ const ProfileView = () => {
     }
     
     setLoading(true);
-    setTimeout(() => {
-      paymentService.submitPaymentProof(currentProfile.id, upiRef, screenshot);
-      setLoading(false);
+    try {
+      await paymentService.submitPaymentProof(currentProfile.id, upiRef, screenshot);
       setUploadMessage('Receipt uploaded! Awaiting Treasurer verification.');
       setUpiRef('');
       setScreenshot('');
       triggerUpdate();
-    }, 1200);
+    } catch(err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleEditSubmit = (e) => {
