@@ -1,0 +1,17 @@
+{
+  "short_name": "Hello Rotaract",
+  "name": "Hello Rotaract - All-in-One App",
+  "icons": [
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "background_color": "#F8F9FA",
+  "theme_color": "#007AFF",
+  "display": "standalone",
+  "orientation": "portrait"
+}
