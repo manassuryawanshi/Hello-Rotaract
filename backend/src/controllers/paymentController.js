@@ -23,26 +23,40 @@ export const submitPaymentProof = async (req, res, next) => {
       return res.status(400).json({ error: 'Transaction Reference ID is required' });
     }
 
-    const updateData = {
-      status: 'PENDING_VERIFICATION',
-      upi_transaction_ref: transactionRef,
-      receipt_screenshot_url: screenshotUrl || null
-    };
-
-    let query = supabase.from('hr_payments').update(updateData).eq('profile_id', req.user.id);
-    
-    // If a specific payment record is targeted, update that. 
-    // Otherwise, assume updating the latest UNPAID record (based on mockDb logic).
+    let existingPayment = null;
     if (paymentId) {
-      query = query.eq('id', paymentId);
+      const { data } = await supabase.from('hr_payments').select('id').eq('id', paymentId).eq('profile_id', req.user.id).single();
+      existingPayment = data;
     } else {
-      query = query.eq('status', 'UNPAID');
+      const { data } = await supabase.from('hr_payments').select('id').eq('profile_id', req.user.id).eq('status', 'UNPAID').maybeSingle();
+      existingPayment = data;
     }
 
-    const { data, error } = await query.select().single();
-    if (error) throw error;
+    let resultData, resultError;
+
+    if (existingPayment) {
+      const { data, error } = await supabase.from('hr_payments').update({
+        status: 'PENDING_VERIFICATION',
+        upi_transaction_ref: transactionRef,
+        receipt_screenshot_url: screenshotUrl || null
+      }).eq('id', existingPayment.id).select().single();
+      resultData = data;
+      resultError = error;
+    } else {
+      const { data, error } = await supabase.from('hr_payments').insert({
+        profile_id: req.user.id,
+        amount_due: 1500,
+        status: 'PENDING_VERIFICATION',
+        upi_transaction_ref: transactionRef,
+        receipt_screenshot_url: screenshotUrl || null
+      }).select().single();
+      resultData = data;
+      resultError = error;
+    }
+
+    if (resultError) throw resultError;
     
-    res.status(200).json({ message: 'Payment proof submitted successfully', payment: data });
+    res.status(200).json({ message: 'Payment proof submitted successfully', payment: resultData });
   } catch (err) {
     next(err);
   }
