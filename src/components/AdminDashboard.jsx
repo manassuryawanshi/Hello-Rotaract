@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { authService, eventService } from '../data/mockDb';
+import { authService, eventService, noticeService, taskService } from '../data/mockDb';
 import { ShieldAlert, UserCheck, CalendarCheck, Check, X, Send, ClipboardList } from 'lucide-react';
 import InitialsAvatar from './InitialsAvatar';
 
 const AdminDashboard = () => {
-  const { currentProfile, profiles, events, attendance, triggerUpdate } = useApp();
+  const { currentProfile, profiles, events, attendance, triggerUpdate, getPendingApprovals, approveUser } = useApp();
   
+  const pendingUsers = getPendingApprovals();
   // Tab/section selection state
   const [adminSection, setAdminSection] = useState('attendance');
   const [selectedEventId, setSelectedEventId] = useState(events[0]?.id || '');
   const [toastMessage, setToastMessage] = useState('');
   
   // Modal states
-  const [noticeModal, setNoticeModal] = useState({ show: false, user: null, message: '' });
-  const [taskModal, setTaskModal] = useState({ show: false, user: null, title: '' });
+  const [noticeModal, setNoticeModal] = useState({ show: false, user: null, title: '', message: '' });
+  const [taskModal, setTaskModal] = useState({ show: false, user: null, title: '', description: '', dueDate: '' });
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -22,13 +23,35 @@ const AdminDashboard = () => {
   };
 
   const handleSendNotice = () => {
+    if (!noticeModal.title || !noticeModal.message) {
+      showToast("Title and message are required");
+      return;
+    }
+    noticeService.createNotice({
+      title: noticeModal.title,
+      content: noticeModal.message
+    }, currentProfile.id);
+    
     showToast(`Notice sent to ${noticeModal.user ? noticeModal.user.name : 'all members'}`);
-    setNoticeModal({ show: false, user: null, message: '' });
+    setNoticeModal({ show: false, user: null, title: '', message: '' });
+    triggerUpdate();
   };
 
   const handleAssignTask = () => {
+    if (!taskModal.title || !taskModal.dueDate) {
+      showToast("Title and due date are required");
+      return;
+    }
+    taskService.createTask({
+      title: taskModal.title,
+      description: taskModal.description,
+      dueDate: new Date(taskModal.dueDate).toISOString(),
+      assignedTo: taskModal.user ? taskModal.user.id : null
+    }, currentProfile.id);
+    
     showToast(`Task assigned to ${taskModal.user ? taskModal.user.name : 'all members'}`);
-    setTaskModal({ show: false, user: null, title: '' });
+    setTaskModal({ show: false, user: null, title: '', description: '', dueDate: '' });
+    triggerUpdate();
   };
 
   const handleToggleAttendance = (profileId, isChecked) => {
@@ -76,6 +99,13 @@ const AdminDashboard = () => {
         >
           <UserCheck size={16} />
           <span>Directory</span>
+        </div>
+        <div 
+          className={`tab-bar-item ${adminSection === 'approvals' ? 'active' : ''}`}
+          onClick={() => setAdminSection('approvals')}
+        >
+          <ShieldAlert size={16} />
+          <span>Pending{pendingUsers.length > 0 && ` (${pendingUsers.length})`}</span>
         </div>
       </div>
 
@@ -192,6 +222,63 @@ const AdminDashboard = () => {
         </div>
       )}
 
+      {/* SECTION 4: Pending Approvals */}
+      {adminSection === 'approvals' && (
+        <div className="dashboard-card">
+          <h3>Pending Member Applications</h3>
+          
+          {pendingUsers.length === 0 ? (
+            <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '24px' }}>
+              No pending applications at the moment.
+            </p>
+          ) : (
+            <div className="table-responsive">
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                <thead>
+                  <tr style={{ borderBottom: '2px solid var(--border-color)', textAlign: 'left', color: 'var(--text-secondary)' }}>
+                    <th style={{ padding: '12px 8px', fontWeight: '600' }}>APPLICANT</th>
+                    <th style={{ padding: '12px 8px', fontWeight: '600' }}>ROTARACT ID</th>
+                    <th style={{ padding: '12px 8px', fontWeight: '600', textAlign: 'right' }}>DECISION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pendingUsers.map(u => (
+                    <tr key={u.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                      <td style={{ padding: '10px 8px', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <InitialsAvatar name={u.name} size={28} />
+                        <div>
+                          <span>{u.name}</span>
+                          <span style={{ display: 'block', fontSize: '11px', color: 'var(--text-secondary)' }}>{u.email}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: '10px 8px', color: 'var(--text-secondary)' }}>{u.rotaractId}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'right' }}>
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                          <button 
+                            className="btn-primary" 
+                            style={{ padding: '6px 12px', fontSize: '11px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '4px', background: '#34c759' }}
+                            onClick={() => approveUser(u.id, 'APPROVED')}
+                          >
+                            <Check size={12} /> Approve
+                          </button>
+                          <button 
+                            className="btn-secondary" 
+                            style={{ padding: '6px 12px', fontSize: '11px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--error-color)' }}
+                            onClick={() => approveUser(u.id, 'REJECTED')}
+                          >
+                            <X size={12} /> Reject
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Toast Notification */}
       {toastMessage && (
         <div style={{ position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)', background: 'var(--text-primary)', color: 'var(--bg-primary)', padding: '12px 24px', borderRadius: '99px', fontSize: '14px', fontWeight: '600', boxShadow: 'var(--shadow-lg)', zIndex: 9999, transition: 'var(--transition-spring)' }}>
@@ -200,9 +287,20 @@ const AdminDashboard = () => {
       )}
 
       {noticeModal.show && (
-        <div className="modal-overlay" onClick={() => setNoticeModal({ show: false, user: null, message: '' })}>
+        <div className="modal-overlay" onClick={() => setNoticeModal({ show: false, user: null, title: '', message: '' })}>
           <div className="modal-content liquid-glass-card slide-up" onClick={e => e.stopPropagation()}>
             <h3 style={{ marginBottom: '16px' }}>Send Notice to {noticeModal.user ? noticeModal.user.name : 'All Members'}</h3>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Notice Title</label>
+              <input 
+                type="text"
+                className="input-modern"
+                value={noticeModal.title} 
+                onChange={e => setNoticeModal({...noticeModal, title: e.target.value})}
+                placeholder="e.g. Urgent Meeting"
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', marginTop: '8px' }}
+              />
+            </div>
             <div className="form-group">
               <label>Notice Message</label>
               <textarea 
@@ -216,17 +314,17 @@ const AdminDashboard = () => {
             </div>
             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
               <button className="btn-primary" style={{ flex: 1 }} onClick={handleSendNotice}>Dispatch Notice</button>
-              <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setNoticeModal({ show: false, user: null, message: '' })}>Cancel</button>
+              <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setNoticeModal({ show: false, user: null, title: '', message: '' })}>Cancel</button>
             </div>
           </div>
         </div>
       )}
 
       {taskModal.show && (
-        <div className="modal-overlay" onClick={() => setTaskModal({ show: false, user: null, title: '' })}>
+        <div className="modal-overlay" onClick={() => setTaskModal({ show: false, user: null, title: '', description: '', dueDate: '' })}>
           <div className="modal-content liquid-glass-card slide-up" onClick={e => e.stopPropagation()}>
             <h3 style={{ marginBottom: '16px' }}>Assign Task to {taskModal.user ? taskModal.user.name : 'All Members'}</h3>
-            <div className="form-group">
+            <div className="form-group" style={{ marginBottom: '12px' }}>
               <label>Task Title</label>
               <input 
                 type="text"
@@ -237,9 +335,30 @@ const AdminDashboard = () => {
                 style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', marginTop: '8px' }}
               />
             </div>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Task Description</label>
+              <textarea 
+                rows="2"
+                className="input-modern"
+                value={taskModal.description} 
+                onChange={e => setTaskModal({...taskModal, description: e.target.value})}
+                placeholder="Details about the task..."
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', marginTop: '8px' }}
+              />
+            </div>
+            <div className="form-group">
+              <label>Due Date</label>
+              <input 
+                type="date"
+                className="input-modern"
+                value={taskModal.dueDate} 
+                onChange={e => setTaskModal({...taskModal, dueDate: e.target.value})}
+                style={{ width: '100%', padding: '12px', borderRadius: '12px', border: '1px solid var(--border-color)', marginTop: '8px' }}
+              />
+            </div>
             <div style={{ display: 'flex', gap: '12px', marginTop: '24px' }}>
               <button className="btn-primary" style={{ flex: 1 }} onClick={handleAssignTask}>Assign Task</button>
-              <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setTaskModal({ show: false, user: null, title: '' })}>Cancel</button>
+              <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setTaskModal({ show: false, user: null, title: '', description: '', dueDate: '' })}>Cancel</button>
             </div>
           </div>
         </div>

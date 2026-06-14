@@ -34,7 +34,19 @@ const Onboarding = () => {
     try {
       login(loginId, loginPassword);
     } catch (err) {
-      setLoginError(err.message);
+      if (err.message === 'Awaiting Club Admin approval.') {
+        const users = JSON.parse(localStorage.getItem('hr_users') || '[]');
+        const u = users.find(x => x.email.toLowerCase() === loginId.toLowerCase() || x.id === loginId);
+        if (u) {
+          setRegisteredUser(u);
+          setRegPassword(loginPassword); // required for auto-login later
+          setView('pending-status');
+        } else {
+          setLoginError(err.message);
+        }
+      } else {
+        setLoginError(err.message);
+      }
     }
   };
 

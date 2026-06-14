@@ -87,6 +87,20 @@ export const AppProvider = ({ children }) => {
     }
   };
 
+  const getPendingApprovals = () => {
+    return authService.getPendingApprovals();
+  };
+
+  const approveUser = (userId, action) => {
+    authService.approveUser(userId, action);
+    triggerUpdate();
+  };
+
+  const updateProfile = (profileId, userId, data) => {
+    authService.updateProfile(profileId, userId, data);
+    triggerUpdate();
+  };
+
   // Custom Debug Role Swapping (Allows showing user flow of other roles instantly)
   const swapRole = (role) => {
     setActiveRole(role);
@@ -161,6 +175,9 @@ export const AppProvider = ({ children }) => {
       login,
       logout,
       registerMember,
+      getPendingApprovals,
+      approveUser,
+      updateProfile,
       deleteTask,
       markNotificationsAsRead,
       userNotifications,

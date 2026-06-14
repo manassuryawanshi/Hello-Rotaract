@@ -70,7 +70,7 @@ const initialProfiles = [
     parentRotary: 'Rotary Club of Midtown Metro',
     district: 'RID 3141',
     isBOD: true,
-    avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
+    avatarUrl: ''
   },
   {
     id: 'p-treasurer',
@@ -82,7 +82,7 @@ const initialProfiles = [
     parentRotary: 'Rotary Club of Midtown Metro',
     district: 'RID 3141',
     isBOD: true,
-    avatarUrl: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80'
+    avatarUrl: ''
   },
   {
     id: 'p-member',
@@ -94,7 +94,7 @@ const initialProfiles = [
     parentRotary: 'Rotary Club of Midtown Metro',
     district: 'RID 3141',
     isBOD: false,
-    avatarUrl: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80'
+    avatarUrl: ''
   }
 ];
 
@@ -469,6 +469,24 @@ export const authService = {
     save(STORAGE_KEYS.NOTIFICATIONS, notifications);
     
     return newUser;
+  },
+
+  updateProfile: (profileId, userId, { name, email, phone, avatarUrl }) => {
+    const profiles = getProfiles();
+    const pIdx = profiles.findIndex(p => p.id === profileId);
+    if (pIdx > -1) {
+      profiles[pIdx].name = name;
+      profiles[pIdx].avatarUrl = avatarUrl;
+      save(STORAGE_KEYS.PROFILES, profiles);
+    }
+    
+    const users = getUsers();
+    const uIdx = users.findIndex(u => u.id === userId);
+    if (uIdx > -1) {
+      users[uIdx].email = email;
+      users[uIdx].phone = phone;
+      save(STORAGE_KEYS.USERS, users);
+    }
   },
 
   getPendingApprovals: () => {

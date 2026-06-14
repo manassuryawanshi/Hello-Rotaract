@@ -6,6 +6,7 @@ import InitialsAvatar from './InitialsAvatar';
 
 const ProfileView = () => {
   const { 
+    currentUser,
     currentProfile, 
     payments, 
     triggerUpdate, 
@@ -15,7 +16,8 @@ const ProfileView = () => {
     toggleTheme,
     profiles,
     activeRole,
-    swapRole
+    swapRole,
+    updateProfile
   } = useApp();
 
   const [screenshot, setScreenshot] = useState('');
@@ -23,7 +25,13 @@ const ProfileView = () => {
   const [loading, setLoading] = useState(false);
   const [uploadMessage, setUploadMessage] = useState('');
   const [showEditModal, setShowEditModal] = useState(false);
-  const [editData, setEditData] = useState({ phone: '+91 98765 43210', email: 'user@example.com', avatarUrl: currentProfile.avatarUrl || '' });
+  // Using actual data if available, otherwise fallbacks
+  const [editData, setEditData] = useState({ 
+    name: currentProfile.name || '',
+    phone: currentUser?.phone || '+91 98765 43210', 
+    email: currentUser?.email || 'user@example.com', 
+    avatarUrl: currentProfile.avatarUrl || '' 
+  });
 
   // Find dues for current profile
   const dues = payments.find(p => p.profileId === currentProfile.id) || {
@@ -41,6 +49,22 @@ const ProfileView = () => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setScreenshot(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
   };
 
   const handlePaymentSubmit = (e) => {
@@ -63,9 +87,8 @@ const ProfileView = () => {
 
   const handleEditSubmit = (e) => {
     e.preventDefault();
-    // Simulate save
+    updateProfile(currentProfile.id, currentUser.id, editData);
     setShowEditModal(false);
-    alert('Profile updated successfully.');
   };
 
   const accentsList = [
@@ -306,8 +329,10 @@ const ProfileView = () => {
                   <label>Payment Screenshot / Receipt</label>
                   <div 
                     className="upload-area"
-                    style={{ border: '2px dashed var(--border-color)', borderRadius: '12px', padding: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px' }}
+                    style={{ border: '2px dashed var(--border-color)', borderRadius: '12px', padding: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
                     onClick={() => document.getElementById('screenshot-file').click()}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
                   >
                     {screenshot ? (
                       <img src={screenshot} alt="Screenshot Preview" className="preview-img" style={{ margin: 0 }} />
@@ -430,14 +455,34 @@ const ProfileView = () => {
             <h3 style={{ marginBottom: '16px', fontSize: '20px', fontWeight: '800' }}>Edit Personal Info</h3>
             
             <form onSubmit={handleEditSubmit} className="onboarding-form">
+              <div className="form-group" style={{ textAlign: 'center', marginBottom: '24px' }}>
+                <div style={{ position: 'relative', display: 'inline-block' }}>
+                   <InitialsAvatar name={editData.name || currentProfile.name} size={80} style={{ margin: '0 auto' }} avatarUrl={editData.avatarUrl} />
+                   <div 
+                     style={{ position: 'absolute', bottom: 0, right: 0, background: 'var(--accent-color)', borderRadius: '50%', padding: '6px', cursor: 'pointer', boxShadow: '0 2px 5px rgba(0,0,0,0.2)' }} 
+                     onClick={() => document.getElementById('avatar-upload').click()}
+                   >
+                     <Edit3 size={12} color="white" />
+                   </div>
+                   <input type="file" id="avatar-upload" accept="image/*" style={{display: 'none'}} onChange={(e) => {
+                     const file = e.target.files[0];
+                     if (file) {
+                       const reader = new FileReader();
+                       reader.onloadend = () => setEditData({...editData, avatarUrl: reader.result});
+                       reader.readAsDataURL(file);
+                     }
+                   }} />
+                </div>
+              </div>
               <div className="form-group">
-                <label>PROFILE PICTURE URL</label>
+                <label>FULL NAME</label>
                 <input 
-                  type="url" 
+                  type="text" 
                   className="form-input"
-                  value={editData.avatarUrl} 
-                  onChange={e => setEditData({...editData, avatarUrl: e.target.value})}
-                  placeholder="https://..."
+                  value={editData.name} 
+                  onChange={e => setEditData({...editData, name: e.target.value})}
+                  placeholder="Enter your name"
+                  required
                 />
               </div>
               <div className="form-group">
