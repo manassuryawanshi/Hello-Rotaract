@@ -8,7 +8,23 @@ export const getAllEvents = async (req, res, next) => {
       .order('start_time', { ascending: true });
 
     if (error) throw error;
-    res.status(200).json({ events });
+    
+    const mappedEvents = events.map(e => ({
+      id: e.id,
+      title: e.title,
+      description: e.description,
+      startTime: e.start_time,
+      endTime: e.end_time,
+      venue: e.venue,
+      tag: e.tag,
+      googleRulebookUrl: e.google_rulebook_url,
+      meetLink: e.meet_link,
+      coordinators: e.coordinators,
+      createdBy: e.created_by,
+      createdAt: e.created_at
+    }));
+
+    res.status(200).json({ events: mappedEvents });
   } catch (err) {
     next(err);
   }
@@ -40,7 +56,23 @@ export const createEvent = async (req, res, next) => {
       .single();
 
     if (error) throw error;
-    res.status(201).json({ message: 'Event created successfully', event: newEvent });
+
+    const mappedEvent = {
+      id: newEvent.id,
+      title: newEvent.title,
+      description: newEvent.description,
+      startTime: newEvent.start_time,
+      endTime: newEvent.end_time,
+      venue: newEvent.venue,
+      tag: newEvent.tag,
+      googleRulebookUrl: newEvent.google_rulebook_url,
+      meetLink: newEvent.meet_link,
+      coordinators: newEvent.coordinators,
+      createdBy: newEvent.created_by,
+      createdAt: newEvent.created_at
+    };
+
+    res.status(201).json({ message: 'Event created successfully', event: mappedEvent });
   } catch (err) {
     next(err);
   }
