@@ -14,9 +14,10 @@ const EventDetailModal = ({ event, onClose }) => {
   );
   
   // Fallback if none assigned
+  const fallbackProfile = profiles.find(p => p.id === event.createdBy) || profiles[0];
   const organizers = coordinatorsList.length > 0 
     ? coordinatorsList 
-    : [profiles.find(p => p.id === event.createdBy) || profiles[0]];
+    : fallbackProfile ? [fallbackProfile] : [];
 
   const handleShare = () => {
     if (navigator.share) {
