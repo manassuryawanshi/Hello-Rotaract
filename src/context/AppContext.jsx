@@ -212,6 +212,7 @@ export const AppProvider = ({ children }) => {
       users,
       profiles,
       preApprovedList,
+      setTasks,
       getPendingApprovals,
       approveUser,
       updateProfile

@@ -10,6 +10,7 @@ const HomeDashboard = ({ setSelectedEvent }) => {
     currentProfile, 
     events, 
     tasks, 
+    setTasks,
     userNotifications, 
     triggerUpdate, 
     setActiveTab 
@@ -29,10 +30,19 @@ const HomeDashboard = ({ setSelectedEvent }) => {
   // Toggle task completion
   const handleToggleTask = async (taskId, currentStatus) => {
     const nextStatus = currentStatus === 'PENDING' ? 'IN_PROGRESS' : currentStatus === 'IN_PROGRESS' ? 'COMPLETED' : 'PENDING';
+    
+    // Optimistic update
+    setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? { ...t, status: nextStatus } : t));
+
     try {
       await taskService.updateTaskStatus(taskId, nextStatus);
-      triggerUpdate();
-    } catch(err) { alert(err.message); }
+      // We don't necessarily need to trigger a full refresh now, but doing so keeps it synced.
+      // triggerUpdate(); // Optional, but removing it avoids unnecessary network requests if it's already updated.
+    } catch(err) { 
+      // Revert on error
+      setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? { ...t, status: currentStatus } : t));
+      alert(err.message); 
+    }
   };
 
   // Helper: Generates list of next 7 days starting from today
