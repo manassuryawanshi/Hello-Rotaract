@@ -20,6 +20,7 @@ const Onboarding = () => {
   const [regRid, setRegRid] = useState('');
   const [regCid, setRegCid] = useState('');
   const [regPassword, setRegPassword] = useState('');
+  const [regRole, setRegRole] = useState('MEMBER');
   const [regError, setRegError] = useState('');
   
   // Loader and auto-approval states
@@ -125,7 +126,8 @@ const Onboarding = () => {
       clubId: regCid || 'CID-505',
       clubName: 'Rotaract Club of Midtown',
       parentRotary: 'Rotary Club of Midtown Metro',
-      district: 'RID 3141'
+      district: 'RID 3141',
+      role: regRole
     });
     setRegisteredUser(user);
 
@@ -368,7 +370,21 @@ const Onboarding = () => {
                   value={regCid}
                   onChange={(e) => setRegCid(e.target.value)}
                 />
-              </div>
+                </div>
+            </div>
+
+            <div className="form-group">
+              <label>REQUESTED ROLE</label>
+              <select 
+                className="form-input" 
+                value={regRole}
+                onChange={(e) => setRegRole(e.target.value)}
+                style={{ padding: '12px 16px', appearance: 'auto' }}
+              >
+                <option value="MEMBER">Member (Default)</option>
+                <option value="TREASURER">Treasurer</option>
+                <option value="ADMIN">Admin</option>
+              </select>
             </div>
             
             <div className="form-group">

@@ -70,7 +70,7 @@ export const login = async (req, res, next) => {
 
 export const register = async (req, res, next) => {
   try {
-    const { email, password, name, rotaractId, clubId, clubName, parentRotary, district } = req.body;
+    const { email, password, name, rotaractId, clubId, clubName, parentRotary, district, role } = req.body;
 
     if (!email || !password || !name || !rotaractId) {
       return res.status(400).json({ error: 'Missing required registration fields' });
@@ -94,6 +94,11 @@ export const register = async (req, res, next) => {
 
     if (error) {
       return res.status(400).json({ error: error.message });
+    }
+
+    // Assign the requested role
+    if (role && ['MEMBER', 'TREASURER', 'ADMIN'].includes(role)) {
+      await supabase.from('hr_profiles').update({ role }).eq('id', data.user.id);
     }
 
     res.status(201).json({

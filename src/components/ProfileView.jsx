@@ -238,36 +238,6 @@ const ProfileView = () => {
             </div>
           </div>
           
-          <div className="dashboard-card" style={{ border: '1px dashed var(--accent-color)' }}>
-            <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Shield size={18} style={{ color: 'var(--accent-color)' }} />
-              <span>Developer Sandbox</span>
-            </h3>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-              Switch profile personas instantly for testing this walkthrough.
-            </p>
-            
-            <div className="tab-bar-container" style={{ margin: '8px 0 0' }}>
-              <div 
-                className={`tab-bar-item ${activeRole === 'MEMBER' ? 'active' : ''}`} 
-                onClick={() => swapRole('MEMBER')}
-              >
-                <span>Normal User</span>
-              </div>
-              <div 
-                className={`tab-bar-item ${activeRole === 'TREASURER' ? 'active' : ''}`} 
-                onClick={() => swapRole('TREASURER')}
-              >
-                <span>Treasurer</span>
-              </div>
-              <div 
-                className={`tab-bar-item ${activeRole === 'ADMIN' ? 'active' : ''}`} 
-                onClick={() => swapRole('ADMIN')}
-              >
-                <span>Admin</span>
-              </div>
-            </div>
-          </div>
 
         </div>
 
