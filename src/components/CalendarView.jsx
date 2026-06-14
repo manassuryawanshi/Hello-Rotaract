@@ -3,13 +3,19 @@ import { ChevronLeft, ChevronRight, Plus, Calendar as CalIcon, Clock, Check } fr
 import { useApp } from '../context/AppContext';
 import { taskService } from '../data/mockDb';
 
-const CalendarView = () => {
+const CalendarView = ({ setSelectedEvent }) => {
   const { events, tasks, currentProfile, triggerUpdate } = useApp();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [activeView, setActiveView] = useState('monthly'); // 'monthly', 'daily', 'yearly'
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [newTask, setNewTask] = useState({ title: '', description: '', date: '', time: '' });
+  const [toastMessage, setToastMessage] = useState('');
+  
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
   
   const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
   
@@ -44,6 +50,7 @@ const CalendarView = () => {
     
     setShowAddModal(false);
     setNewTask({ title: '', description: '', date: '', time: '' });
+    showToast("Task created successfully!");
     triggerUpdate();
   };
 
@@ -155,7 +162,11 @@ const CalendarView = () => {
           <div className="dashboard-card liquid-glass-card">
             <h4 style={{ marginBottom: '16px', color: 'var(--warning-color)' }}>Scheduled Events</h4>
             {dayEvents.map(ev => (
-              <div key={ev.id} style={{ display: 'flex', gap: '12px', padding: '16px', background: 'var(--bg-primary)', borderRadius: '16px', marginBottom: '8px', border: '1px solid var(--border-color)' }}>
+              <div 
+                key={ev.id} 
+                onClick={() => setSelectedEvent && setSelectedEvent(ev)}
+                style={{ cursor: 'pointer', display: 'flex', gap: '12px', padding: '16px', background: 'var(--bg-primary)', borderRadius: '16px', marginBottom: '8px', border: '1px solid var(--border-color)' }}
+              >
                 <CalIcon size={20} style={{ color: 'var(--warning-color)' }} />
                 <div>
                   <h5 style={{ fontSize: '15px', fontWeight: '700' }}>{ev.title}</h5>
@@ -275,6 +286,13 @@ const CalendarView = () => {
               <button type="submit" className="btn-primary" style={{ marginTop: '24px', width: '100%' }}>Create Entry</button>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div style={{ position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)', background: 'var(--text-primary)', color: 'var(--bg-primary)', padding: '12px 24px', borderRadius: '99px', fontSize: '14px', fontWeight: '600', boxShadow: 'var(--shadow-lg)', zIndex: 9999, transition: 'var(--transition-spring)' }}>
+          {toastMessage}
         </div>
       )}
     </div>

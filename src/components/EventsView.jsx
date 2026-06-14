@@ -18,6 +18,12 @@ const EventsView = ({ setSelectedEvent }) => {
   const [meetLink, setMeetLink] = useState('');
   const [selectedCoordinators, setSelectedCoordinators] = useState([currentProfile?.id]);
   const [error, setError] = useState('');
+  const [toastMessage, setToastMessage] = useState('');
+
+  const showToast = (msg) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
 
   const handleCreateEvent = async (e) => {
     e.preventDefault();
@@ -56,6 +62,7 @@ const EventsView = ({ setSelectedEvent }) => {
       setMeetLink('');
       setSelectedCoordinators([currentProfile.id]);
       setShowCreateForm(false);
+      showToast("Event created successfully!");
       triggerUpdate();
     } catch (err) {
       setError(err.message);
@@ -265,6 +272,13 @@ const EventsView = ({ setSelectedEvent }) => {
               </button>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div style={{ position: 'fixed', bottom: '100px', left: '50%', transform: 'translateX(-50%)', background: 'var(--text-primary)', color: 'var(--bg-primary)', padding: '12px 24px', borderRadius: '99px', fontSize: '14px', fontWeight: '600', boxShadow: 'var(--shadow-lg)', zIndex: 9999, transition: 'var(--transition-spring)' }}>
+          {toastMessage}
         </div>
       )}
     </div>

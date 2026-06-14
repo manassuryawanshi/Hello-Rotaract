@@ -29,7 +29,7 @@ function MainAppContent() {
       case 'events':
         return <EventsView setSelectedEvent={setSelectedEvent} />;
       case 'calendar':
-        return <CalendarView />;
+        return <CalendarView setSelectedEvent={setSelectedEvent} />;
       case 'analytics':
         return <AnalyticsView />;
       case 'profile':
