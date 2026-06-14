@@ -3,8 +3,8 @@
 /* Core Layout Container */
 .app-container {
   display: flex;
-  min-height: 100vh;
-  min-height: 100svh;
+  height: 100vh;
+  height: 100svh;
   width: 100%;
   max-width: 100%;
   background-color: var(--bg-primary);
