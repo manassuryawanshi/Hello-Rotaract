@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { eventService, noticeService, taskService } from '../data/mockDb.js';
 import { ShieldAlert, UserCheck, CalendarCheck, Check, X, Send, ClipboardList } from 'lucide-react';
@@ -7,11 +7,29 @@ import InitialsAvatar from './InitialsAvatar';
 const AdminDashboard = () => {
   const { currentProfile, profiles, events, attendance, triggerUpdate, getPendingApprovals, approveUser } = useApp();
   
-  const pendingUsers = getPendingApprovals();
+  const [pendingUsers, setPendingUsers] = useState([]);
+  
   // Tab/section selection state
   const [adminSection, setAdminSection] = useState('attendance');
   const [selectedEventId, setSelectedEventId] = useState(events[0]?.id || '');
   const [toastMessage, setToastMessage] = useState('');
+
+  useEffect(() => {
+    if (adminSection === 'approvals') {
+      const fetchApprovals = async () => {
+        const data = await getPendingApprovals();
+        setPendingUsers(data || []);
+      };
+      fetchApprovals();
+    }
+  }, [adminSection, getPendingApprovals]);
+
+  const handleApprove = async (userId, action) => {
+    await approveUser(userId, action);
+    const data = await getPendingApprovals();
+    setPendingUsers(data || []);
+    triggerUpdate();
+  };
   
   // Modal states
   const [noticeModal, setNoticeModal] = useState({ show: false, user: null, title: '', message: '' });
@@ -258,14 +276,14 @@ const AdminDashboard = () => {
                           <button 
                             className="btn-primary" 
                             style={{ padding: '6px 12px', fontSize: '11px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '4px', background: '#34c759' }}
-                            onClick={() => approveUser(u.id, 'APPROVED')}
+                            onClick={() => handleApprove(u.id, 'APPROVED')}
                           >
                             <Check size={12} /> Approve
                           </button>
                           <button 
                             className="btn-secondary" 
                             style={{ padding: '6px 12px', fontSize: '11px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '4px', color: 'var(--error-color)' }}
-                            onClick={() => approveUser(u.id, 'REJECTED')}
+                            onClick={() => handleApprove(u.id, 'REJECTED')}
                           >
                             <X size={12} /> Reject
                           </button>

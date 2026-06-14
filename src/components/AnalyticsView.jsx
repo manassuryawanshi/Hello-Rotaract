@@ -306,6 +306,7 @@ const AnalyticsView = () => {
               {displayedTasks.length > 0 ? (
                 displayedTasks.map(task => {
                   const isSelf = task.createdBy === currentProfile.id;
+                  const canDelete = isSelf || activeRole === 'ADMIN';
                   return (
                     <div key={task.id} className="task-item" style={{ borderLeft: `4px solid ${isSelf ? 'var(--accent-color)' : 'var(--warning-color)'}` }}>
                       <div 
@@ -328,7 +329,7 @@ const AnalyticsView = () => {
                         </div>
                       </div>
 
-                      {isSelf && (
+                      {canDelete && (
                         <button 
                           onClick={() => handleDeleteTask(task.id)}
                           className="btn-secondary"

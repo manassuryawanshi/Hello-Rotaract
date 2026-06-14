@@ -34,7 +34,12 @@ export const authService = {
   },
   getPendingApprovals: async () => {
     const data = await apiClient.get('/auth/admin/approvals');
-    return data.pendingApprovals;
+    return (data.pendingApprovals || []).map(a => ({
+      id: a.profile.id,
+      name: a.profile.name,
+      email: a.user.email,
+      rotaractId: a.profile.rotaract_id
+    }));
   },
   approveUser: async (userId, action) => {
     return await apiClient.post('/auth/admin/approve', { userId, action });
@@ -116,7 +121,13 @@ export const fetchMyAttendance = async () => {
 };
 export const fetchTasks = async () => {
   const data = await apiClient.get('/tasks');
-  return data.tasks;
+  return (data.tasks || []).map(t => ({
+    ...t,
+    assignedTo: t.assigned_to,
+    createdBy: t.created_by,
+    startDate: t.start_date,
+    endDate: t.end_date
+  }));
 };
 export const fetchNotices = async () => {
   const data = await apiClient.get('/notices');

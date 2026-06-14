@@ -2,12 +2,17 @@ import { supabase } from '../config/supabase.js';
 
 export const getTasks = async (req, res, next) => {
   try {
-    // Users can see tasks they created or that are assigned to them
-    const { data: tasks, error } = await supabase
+    let query = supabase
       .from('hr_tasks')
       .select('*')
-      .or(`created_by.eq.${req.user.id},assigned_to.eq.${req.user.id}`)
       .order('created_at', { ascending: false });
+
+    // Admins see all tasks, members see their own
+    if (req.profile.role !== 'ADMIN') {
+      query = query.or(`created_by.eq.${req.user.id},assigned_to.eq.${req.user.id},assigned_to.is.null`);
+    }
+
+    const { data: tasks, error } = await query;
 
     if (error) throw error;
     res.status(200).json({ tasks });
@@ -49,8 +54,6 @@ export const updateTaskStatus = async (req, res, next) => {
     const { taskId } = req.params;
     const { status } = req.body;
 
-    // We rely on RLS or application logic to restrict who can update.
-    // For simplicity, we ensure the task belongs to the user or is assigned to them.
     const { data: task, error: fetchErr } = await supabase
       .from('hr_tasks')
       .select('*')
@@ -59,7 +62,7 @@ export const updateTaskStatus = async (req, res, next) => {
       
     if (fetchErr || !task) return res.status(404).json({ error: 'Task not found' });
     
-    if (task.created_by !== req.user.id && task.assigned_to !== req.user.id) {
+    if (task.created_by !== req.user.id && task.assigned_to !== req.user.id && req.profile.role !== 'ADMIN') {
       return res.status(403).json({ error: 'Not authorized to update this task' });
     }
 
@@ -89,8 +92,8 @@ export const deleteTask = async (req, res, next) => {
       
     if (fetchErr || !task) return res.status(404).json({ error: 'Task not found' });
     
-    if (task.created_by !== req.user.id) {
-      return res.status(403).json({ error: 'Only the creator can delete this task' });
+    if (task.created_by !== req.user.id && req.profile.role !== 'ADMIN') {
+      return res.status(403).json({ error: 'Only the creator or an admin can delete this task' });
     }
 
     const { error } = await supabase.from('hr_tasks').delete().eq('id', taskId);
