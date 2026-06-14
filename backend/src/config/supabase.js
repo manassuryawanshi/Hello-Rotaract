@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import WebSocket from 'ws';
 
 dotenv.config();
 
@@ -15,5 +16,8 @@ export const supabase = createClient(supabaseUrl || '', supabaseServiceKey || ''
   auth: {
     autoRefreshToken: false,
     persistSession: false
+  },
+  realtime: {
+    transport: WebSocket
   }
 });
