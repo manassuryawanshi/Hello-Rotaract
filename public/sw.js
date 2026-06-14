@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hello-rotaract-cache-v1';
+const CACHE_NAME = 'hello-rotaract-cache-v2';
 const ASSETS = [
   '/',
   '/index.html',
@@ -29,17 +29,19 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request).catch(() => caches.match('/index.html'))
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then((cachedResponse) => {
       if (cachedResponse) {
         return cachedResponse;
       }
-      return fetch(e.request).catch(() => {
-        // Return offline fallback if network fails
-        if (e.request.mode === 'navigate') {
-          return caches.match('/index.html');
-        }
-      });
+      return fetch(e.request);
     })
   );
 });
