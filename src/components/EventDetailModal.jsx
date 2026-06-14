@@ -78,22 +78,9 @@ const EventDetailModal = ({ event, onClose }) => {
             </div>
           </div>
 
-          {/* Quick links Grid (Refined alignments, removed Chat) */}
+          {/* Quick links Grid (Refined alignments, removed Register Now) */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px' }}>
             
-            {/* Primary CTA */}
-            <button 
-              className="btn-primary" 
-              onClick={() => {
-                alert('Successfully registered for this event!');
-                onClose();
-              }}
-              style={{ width: '100%', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '14px', borderRadius: '12px' }}
-            >
-              <CheckCircle2 size={16} />
-              <span>Register Now</span>
-            </button>
-
             {/* Sibling secondary row */}
             <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
               <button 
@@ -105,14 +92,16 @@ const EventDetailModal = ({ event, onClose }) => {
                 <span>Share Event</span>
               </button>
 
-              <button 
-                className="btn-secondary" 
-                onClick={() => window.open(event.googleRulebookUrl, '_blank')}
-                style={{ flex: 1, border: '1px solid var(--border-color)', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '13px', borderRadius: '12px' }}
-              >
-                <BookOpen size={15} />
-                <span>Rulebook</span>
-              </button>
+              {event.googleRulebookUrl && (
+                <button 
+                  className="btn-secondary" 
+                  onClick={() => window.open(event.googleRulebookUrl, '_blank')}
+                  style={{ flex: 1, border: '1px solid var(--border-color)', padding: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', fontSize: '13px', borderRadius: '12px' }}
+                >
+                  <BookOpen size={15} />
+                  <span>Rulebook</span>
+                </button>
+              )}
             </div>
 
             {/* Bottom full CTA */}
