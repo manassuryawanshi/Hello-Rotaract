@@ -9,6 +9,7 @@ const AnalyticsView = () => {
     events,
     myAttendance,
     tasks, 
+    setTasks,
     notices, 
     activeRole, 
     triggerUpdate,
@@ -82,10 +83,19 @@ const AnalyticsView = () => {
     ? assignedTasks 
     : selfTasks;
 
-  const handleToggleTask = (taskId, currentStatus) => {
+  const handleToggleTask = async (taskId, currentStatus) => {
     const nextStatus = currentStatus === 'COMPLETED' ? 'IN_PROGRESS' : 'COMPLETED';
-    taskService.updateTaskStatus(taskId, nextStatus);
-    triggerUpdate();
+    
+    // Optimistic update
+    setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? { ...t, status: nextStatus } : t));
+
+    try {
+      await taskService.updateTaskStatus(taskId, nextStatus);
+    } catch(err) {
+      // Revert on error
+      setTasks(prevTasks => prevTasks.map(t => t.id === taskId ? { ...t, status: currentStatus } : t));
+      alert(err.message);
+    }
   };
 
   const handleCreateSelfTask = (e) => {
