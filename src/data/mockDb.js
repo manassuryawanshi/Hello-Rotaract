@@ -1,3 +1,9 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://cqiluweftrorvwdzvwko.supabase.co';
+const supabaseKey = 'sb_publishable_XNLq_zMMsXmCHWozaSndtA_Vkt0H_cM';
+export const supabase = createClient(supabaseUrl, supabaseKey);
+
 // Hello Rotaract Mock Database & Microservices Logic Layer
 // Simulates the microservices architecture using LocalStorage for true persistence.
 
@@ -260,6 +266,10 @@ const load = (key, seed) => {
   const data = localStorage.getItem(key);
   if (!data) {
     localStorage.setItem(key, JSON.stringify(seed));
+    // Push initial seed to supabase asynchronously
+    supabase.from('app_state').upsert({ key, value: seed }).then(res => {
+       if (res.error) console.error('Supabase seed error:', res.error);
+    });
     return seed;
   }
   return JSON.parse(data);
@@ -267,6 +277,23 @@ const load = (key, seed) => {
 
 const save = (key, data) => {
   localStorage.setItem(key, JSON.stringify(data));
+  // Fire and forget push to Supabase
+  supabase.from('app_state').upsert({ key, value: data }).then(res => {
+     if (res.error) console.error('Supabase sync error:', res.error);
+  });
+};
+
+export const syncFromSupabase = async () => {
+  try {
+    const { data, error } = await supabase.from('app_state').select('*');
+    if (data && data.length > 0) {
+      data.forEach(row => {
+        localStorage.setItem(row.key, JSON.stringify(row.value));
+      });
+    }
+  } catch (err) {
+    console.error('Failed to sync from Supabase', err);
+  }
 };
 
 // Database Initialization
