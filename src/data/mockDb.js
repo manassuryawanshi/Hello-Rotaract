@@ -11,9 +11,20 @@ export const authService = {
     return data;
   },
   getCurrentSession: () => {
-    const sessionStr = localStorage.getItem('hr_session');
-    if (!sessionStr) return null;
-    return JSON.parse(sessionStr);
+    try {
+      const sessionStr = localStorage.getItem('hr_session');
+      if (!sessionStr) return null;
+      const data = JSON.parse(sessionStr);
+      // Validate structure to prevent crashes from old data
+      if (!data || !data.user) {
+        localStorage.removeItem('hr_session');
+        return null;
+      }
+      return data;
+    } catch (e) {
+      localStorage.removeItem('hr_session');
+      return null;
+    }
   },
   logout: () => {
     localStorage.removeItem('hr_session');
