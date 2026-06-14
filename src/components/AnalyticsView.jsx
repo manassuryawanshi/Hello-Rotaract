@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { taskService, noticeService } from '../data/mockDb';
-import { BarChart, CheckSquare, BellRing, Plus, Check, Trash2, Calendar, Share2, Clipboard, PlusSquare } from 'lucide-react';
+import { BarChart as BarChartIcon, CheckSquare, BellRing, Plus, Check, Trash2, Calendar, Share2, Clipboard, PlusSquare } from 'lucide-react';
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from 'recharts';
 
 const AnalyticsView = () => {
   const { 
     currentProfile, 
     events,
     myAttendance,
+    attendance: allAttendance,
     tasks, 
     setTasks,
     notices, 
@@ -18,6 +20,7 @@ const AnalyticsView = () => {
   } = useApp();
 
   const [activeSubTab, setActiveSubTab] = useState('analytics'); // 'analytics', 'tasks', 'notices'
+  const [viewMode, setViewMode] = useState('club'); // 'club' or 'personal'
   const [taskFilter, setTaskFilter] = useState('all'); // 'all', 'assigned', 'self'
   const [showSelfTaskForm, setShowSelfTaskForm] = useState(false);
   const [showNoticeForm, setShowNoticeForm] = useState(false);
@@ -33,9 +36,17 @@ const AnalyticsView = () => {
   const [noticeDate, setNoticeDate] = useState('');
 
   // Calculate analytics
-  const getChatsAnalytics = () => {
+  const getChatsAnalytics = (mode) => {
     const pastEvents = (events || []).filter(e => new Date(e.startTime || e.start_time) < new Date());
     
+    let targetAttendance = myAttendance || [];
+    let totalPossibleAttendance = pastEvents.length;
+    
+    if (mode === 'club' && activeRole === 'ADMIN') {
+      targetAttendance = allAttendance || [];
+      totalPossibleAttendance = pastEvents.length * (profiles?.length || 1);
+    }
+
     if (pastEvents.length === 0) {
       return {
         eventRingPercentage: 0,
@@ -46,31 +57,60 @@ const AnalyticsView = () => {
       };
     }
     
-    const userAttendance = myAttendance || [];
-    const eventRingPercentage = Math.round((userAttendance.length / pastEvents.length) * 100);
+    const eventRingPercentage = totalPossibleAttendance > 0 ? Math.round((targetAttendance.length / totalPossibleAttendance) * 100) : 0;
     
     const distribution = { Ceremony: 0, 'Community Service': 0, 'Professional Dev': 0 };
-    userAttendance.forEach(att => {
+    targetAttendance.forEach(att => {
       const ev = pastEvents.find(e => e.id === (att.eventId || att.event_id));
       if (ev && distribution[ev.tag] !== undefined) {
         distribution[ev.tag]++;
       }
     });
 
+    const activeSector = Object.keys(distribution).reduce((a, b) => distribution[a] > distribution[b] ? a : b);
+
     return {
       eventRingPercentage,
-      attendedCount: userAttendance.length,
+      attendedCount: targetAttendance.length,
       totalPastEvents: pastEvents.length,
       distribution,
-      insights: [
-        `You have logged ${eventRingPercentage}% attendance at past club actions.`,
-        eventRingPercentage > 60 ? 'Stunning commitment to the community!' : 'Participate in upcoming cleanups to raise your metrics.',
-        `Most active sector of involvement: Community Service.`
-      ]
+      insights: mode === 'club'
+        ? [
+            `The club has maintained ${eventRingPercentage}% overall attendance at past actions.`,
+            eventRingPercentage > 60 ? 'Great club engagement overall!' : 'Focus on member retention and outreach.',
+            `Most active club sector: ${activeSector}.`
+          ]
+        : [
+            `You have logged ${eventRingPercentage}% attendance at past club actions.`,
+            eventRingPercentage > 60 ? 'Stunning commitment to the community!' : 'Participate in upcoming cleanups to raise your metrics.',
+            `Most active sector of involvement: ${activeSector}.`
+          ]
     };
   };
 
-  const analytics = getChatsAnalytics();
+  const currentMode = (activeRole === 'ADMIN' && viewMode === 'club') ? 'club' : 'personal';
+  const analytics = getChatsAnalytics(currentMode);
+
+  // Pie Chart Data Processors
+  const eventPieData = [
+    { name: 'Ceremony', value: analytics.distribution.Ceremony, color: '#d91c5c' },
+    { name: 'Community', value: analytics.distribution['Community Service'], color: '#34c759' },
+    { name: 'Professional', value: analytics.distribution['Professional Dev'], color: '#007aff' }
+  ].filter(d => d.value > 0);
+
+  const getTasksAnalytics = () => {
+    let targetTasks = tasks;
+    if (currentMode === 'personal') {
+      targetTasks = tasks.filter(t => t.assignedTo === currentProfile.id || t.assigned_to === currentProfile.id);
+    }
+    const completed = targetTasks.filter(t => t.status === 'COMPLETED').length;
+    const pending = targetTasks.length - completed;
+    return [
+      { name: 'Completed', value: completed, color: '#34c759' },
+      { name: 'Pending', value: pending, color: '#ff9500' }
+    ].filter(d => d.value > 0);
+  };
+  const taskPieData = getTasksAnalytics();
 
   // Filter Tasks
   const allMyTasks = tasks.filter(t => t.assignedTo === currentProfile.id || (t.createdBy === currentProfile.id && t.assignedTo === currentProfile.id));
@@ -182,7 +222,7 @@ const AnalyticsView = () => {
           className={`tab-bar-item ${activeSubTab === 'analytics' ? 'active' : ''}`}
           onClick={() => setActiveSubTab('analytics')}
         >
-          <BarChart size={16} />
+          <BarChartIcon size={16} />
           <span>Analytics</span>
         </div>
         <div 
@@ -204,9 +244,19 @@ const AnalyticsView = () => {
       {/* SUB-VIEW 1: Analytics Dashboard */}
       {activeSubTab === 'analytics' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* Admin Toggle */}
+          {activeRole === 'ADMIN' && (
+            <div className="tab-bar-container" style={{ display: 'inline-flex', marginBottom: '8px' }}>
+              <div className={`tab-bar-item ${viewMode === 'club' ? 'active' : ''}`} onClick={() => setViewMode('club')}>Club Analytics</div>
+              <div className={`tab-bar-item ${viewMode === 'personal' ? 'active' : ''}`} onClick={() => setViewMode('personal')}>My Analytics</div>
+            </div>
+          )}
+
           <div className="dashboard-grid">
-            <div className="dashboard-card analytics-card">
-              <h3>Attendance Analytics</h3>
+            {currentMode === 'personal' && (
+              <div className="dashboard-card analytics-card">
+                <h3>My Attendance</h3>
               
               <div className="progress-ring-container">
                 <svg height={radius * 2} width={radius * 2}>
@@ -252,29 +302,85 @@ const AnalyticsView = () => {
                 </div>
               </div>
             </div>
+            )}
 
-            <div className="dashboard-card">
-              <h3>Participation Breakdown</h3>
-              
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', margin: '8px 0 20px' }}>
-                {Object.entries(analytics.distribution).map(([category, count]) => (
-                  <div key={category}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '4px', fontWeight: '500' }}>
-                      <span>{category}</span>
-                      <span style={{ color: 'var(--text-secondary)' }}>{count} events</span>
-                    </div>
-                    <div style={{ height: '6px', background: 'var(--border-color)', borderRadius: '99px', overflow: 'hidden' }}>
-                      <div 
-                        style={{ 
-                          height: '100%', 
-                          width: `${count > 0 ? (count / (analytics.attendedCount || 1)) * 100 : 0}%`, 
-                          background: category === 'Ceremony' ? '#d91c5c' : category === 'Community Service' ? '#34c759' : '#007aff',
-                          borderRadius: '99px'
-                        }}
-                      />
-                    </div>
+            <div className="dashboard-card" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+              <div>
+                <h3>Category Distribution</h3>
+                <div style={{ height: '200px', width: '100%', marginTop: '16px' }}>
+                  {eventPieData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={eventPieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {eventPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>No events logged yet</div>
+                  )}
+                </div>
+                
+                {eventPieData.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '8px' }}>
+                    {eventPieData.map(d => (
+                      <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: d.color }}></div>
+                        {d.name} ({d.value})
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
+              </div>
+
+              <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '24px' }}>
+                <h3>Task Completion</h3>
+                <div style={{ height: '200px', width: '100%', marginTop: '16px' }}>
+                  {taskPieData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={taskPieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={60}
+                          outerRadius={80}
+                          paddingAngle={5}
+                          dataKey="value"
+                        >
+                          {taskPieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)', fontSize: '13px' }}>No tasks assigned yet</div>
+                  )}
+                </div>
+                
+                {taskPieData.length > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', flexWrap: 'wrap', marginTop: '8px' }}>
+                    {taskPieData.map(d => (
+                      <div key={d.name} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: d.color }}></div>
+                        {d.name} ({d.value})
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>

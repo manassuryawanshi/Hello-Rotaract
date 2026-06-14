@@ -164,3 +164,16 @@ export const getMyAttendance = async (req, res, next) => {
     next(err);
   }
 };
+
+export const getAllAttendance = async (req, res, next) => {
+  try {
+    const { data: attendance, error } = await supabase
+      .from('hr_attendance')
+      .select('*');
+
+    if (error) throw error;
+    res.status(200).json({ attendance });
+  } catch (err) {
+    next(err);
+  }
+};

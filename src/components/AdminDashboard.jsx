@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { eventService, noticeService, taskService } from '../data/mockDb.js';
-import { ShieldAlert, UserCheck, CalendarCheck, Check, X, Send, ClipboardList } from 'lucide-react';
+import { ShieldAlert, UserCheck, CalendarCheck, Check, X, Send, ClipboardList, BarChart2 } from 'lucide-react';
 import InitialsAvatar from './InitialsAvatar';
 
 const AdminDashboard = () => {
-  const { currentProfile, profiles, events, attendance, triggerUpdate, getPendingApprovals, approveUser } = useApp();
+  const { currentProfile, profiles, events, attendance, tasks, triggerUpdate, getPendingApprovals, approveUser } = useApp();
   
   const [pendingUsers, setPendingUsers] = useState([]);
   
@@ -34,6 +34,23 @@ const AdminDashboard = () => {
   // Modal states
   const [noticeModal, setNoticeModal] = useState({ show: false, user: null, title: '', message: '' });
   const [taskModal, setTaskModal] = useState({ show: false, user: null, title: '', description: '', dueDate: '' });
+  const [performanceModal, setPerformanceModal] = useState({ show: false, user: null, stats: null });
+
+  const handleViewPerformance = (user) => {
+    // Both profileId and profile_id just to be safe depending on casing returned
+    const eventsAttended = attendance.filter(a => a.profile_id === user.id || a.profileId === user.id).length;
+    const eventsCoordinated = events.filter(e => e.coordinators && e.coordinators.includes(user.id)).length;
+    
+    const tasksAssigned = tasks.filter(t => t.assignedTo === user.id || t.assigned_to === user.id);
+    const tasksCompleted = tasksAssigned.filter(t => t.status === 'COMPLETED').length;
+    const tasksPending = tasksAssigned.length - tasksCompleted;
+
+    setPerformanceModal({
+      show: true,
+      user,
+      stats: { eventsAttended, eventsCoordinated, tasksCompleted, tasksPending }
+    });
+  };
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -231,6 +248,13 @@ const AdminDashboard = () => {
                         >
                           <ClipboardList size={12} /> Task
                         </button>
+                        <button 
+                          className="btn-secondary" 
+                          style={{ padding: '6px 12px', fontSize: '11px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '4px', background: 'var(--bg-secondary)' }}
+                          onClick={() => handleViewPerformance(p)}
+                        >
+                          <BarChart2 size={12} /> Performance
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -379,6 +403,44 @@ const AdminDashboard = () => {
               <button className="btn-primary" style={{ flex: 1 }} onClick={handleAssignTask}>Assign Task</button>
               <button className="btn-secondary" style={{ flex: 1 }} onClick={() => setTaskModal({ show: false, user: null, title: '', description: '', dueDate: '' })}>Cancel</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Performance Modal */}
+      {performanceModal.show && performanceModal.user && (
+        <div className="modal-overlay" onClick={() => setPerformanceModal({ show: false, user: null, stats: null })}>
+          <div className="modal-content liquid-glass-card slide-up" onClick={e => e.stopPropagation()} style={{ maxWidth: '450px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+              <InitialsAvatar name={performanceModal.user.name} size={48} />
+              <div>
+                <h3 style={{ margin: 0 }}>{performanceModal.user.name}</h3>
+                <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>{performanceModal.user.rotaractId} • {performanceModal.user.role}</span>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+              <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--accent-color)' }}>{performanceModal.stats.eventsAttended}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Events Attended</div>
+              </div>
+              <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: '800', color: 'var(--accent-color)' }}>{performanceModal.stats.eventsCoordinated}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Events Coordinated</div>
+              </div>
+              <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: '800', color: '#34c759' }}>{performanceModal.stats.tasksCompleted}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tasks Completed</div>
+              </div>
+              <div style={{ background: 'var(--bg-secondary)', padding: '16px', borderRadius: '12px', textAlign: 'center' }}>
+                <div style={{ fontSize: '24px', fontWeight: '800', color: '#ff9500' }}>{performanceModal.stats.tasksPending}</div>
+                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Tasks Pending</div>
+              </div>
+            </div>
+
+            <button className="btn-secondary" style={{ width: '100%' }} onClick={() => setPerformanceModal({ show: false, user: null, stats: null })}>
+              Close Report
+            </button>
           </div>
         </div>
       )}

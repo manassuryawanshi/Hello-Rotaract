@@ -9,6 +9,7 @@ import {
   notificationService,
   fetchEvents,
   fetchMyAttendance,
+  fetchAllAttendance,
   fetchTasks,
   fetchNotices,
   fetchNotifications,
@@ -83,6 +84,9 @@ export const AppProvider = ({ children }) => {
         if (activeRole === 'TREASURER' || activeRole === 'ADMIN') {
           const pending = await paymentService.getPendingPayments();
           setPayments(pending || []);
+          
+          const allAtt = await fetchAllAttendance();
+          setAttendance(allAtt || []);
         } else {
           const dues = await paymentService.getMemberDues();
           setPayments(dues ? [dues] : []);

@@ -119,6 +119,10 @@ export const fetchMyAttendance = async () => {
   const data = await apiClient.get('/events/attendance/me');
   return data.attendance;
 };
+export const fetchAllAttendance = async () => {
+  const data = await apiClient.get('/events/attendance/all');
+  return data.attendance;
+};
 export const fetchTasks = async () => {
   const data = await apiClient.get('/tasks');
   return (data.tasks || []).map(t => ({

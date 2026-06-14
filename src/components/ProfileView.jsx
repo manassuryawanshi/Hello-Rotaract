@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { paymentService } from '../data/mockDb';
-import { Upload, CheckCircle2, Sun, Moon, Shield, MapPin, Activity, Info, Edit3, Mail, LogOut } from 'lucide-react';
+import { Upload, CheckCircle2, Sun, Moon, Shield, MapPin, Activity, Info, Edit3, Mail, LogOut, Calendar, Droplet, Phone, Heart, Award, Star, Tag, User } from 'lucide-react';
 import InitialsAvatar from './InitialsAvatar';
 
 const ProfileView = () => {
@@ -142,6 +142,61 @@ const ProfileView = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
           <div className="dashboard-card liquid-glass-card">
+            <h3>Personal Information</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginTop: '20px' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(var(--accent-rgb), 0.1)' }}>
+                  <Droplet size={16} style={{ color: 'var(--accent-color)' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>Blood Group</div>
+                  <div style={{ fontSize: '14px', fontWeight: '500', marginTop: '2px' }}>O+ Positive</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(var(--accent-rgb), 0.1)' }}>
+                  <Calendar size={16} style={{ color: 'var(--accent-color)' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>Date of Birth</div>
+                  <div style={{ fontSize: '14px', fontWeight: '500', marginTop: '2px' }}>15 Aug 1998</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(var(--accent-rgb), 0.1)' }}>
+                  <Phone size={16} style={{ color: 'var(--accent-color)' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>Phone</div>
+                  <div style={{ fontSize: '14px', fontWeight: '500', marginTop: '2px' }}>{editData.phone}</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(var(--accent-rgb), 0.1)' }}>
+                  <Mail size={16} style={{ color: 'var(--accent-color)' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>Email</div>
+                  <div style={{ fontSize: '14px', fontWeight: '500', marginTop: '2px', wordBreak: 'break-all' }}>{editData.email}</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style={{ marginTop: '20px', paddingTop: '16px', borderTop: '1px dashed var(--border-color)' }}>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
+                <div style={{ padding: '8px', borderRadius: '8px', background: 'rgba(255, 59, 48, 0.1)' }}>
+                  <Heart size={16} style={{ color: 'var(--error-color)' }} />
+                </div>
+                <div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: '600', textTransform: 'uppercase' }}>Emergency Contact</div>
+                  <div style={{ fontSize: '14px', fontWeight: '500', marginTop: '2px' }}>Rahul (Brother)</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '2px' }}>+91 98765 12345</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="dashboard-card liquid-glass-card">
             <h3>Club Information</h3>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', margin: '20px 0 16px' }}>
               <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: 'rgba(var(--accent-rgb), 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -238,6 +293,29 @@ const ProfileView = () => {
             </div>
           </div>
           
+          <div className="dashboard-card">
+            <h3>Skills & Interests</h3>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px' }}>
+              {['Public Speaking', 'Event Management', 'Photography', 'Social Media', 'Fundraising', 'Design'].map((skill, i) => (
+                <span key={i} style={{ 
+                  padding: '6px 12px', 
+                  borderRadius: '99px', 
+                  fontSize: '12px', 
+                  fontWeight: '500', 
+                  background: 'var(--bg-secondary)',
+                  border: '1px solid var(--border-color)',
+                  color: 'var(--text-primary)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <Tag size={12} style={{ color: 'var(--text-secondary)' }} />
+                  {skill}
+                </span>
+              ))}
+            </div>
+          </div>
+          
           <div className="dashboard-card" style={{ border: '1px dashed var(--accent-color)' }}>
             <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <Shield size={18} style={{ color: 'var(--accent-color)' }} />
@@ -274,6 +352,41 @@ const ProfileView = () => {
         {/* Right Column */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           
+          <div className="dashboard-card">
+            <h3>Achievements & Badges</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', marginTop: '20px' }}>
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', padding: '12px', borderRadius: '12px', background: 'rgba(255, 149, 0, 0.05)', border: '1px solid rgba(255, 149, 0, 0.2)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, #FFD700, #FFA500)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', boxShadow: '0 4px 10px rgba(255, 165, 0, 0.3)' }}>
+                  <Star size={24} fill="currentColor" />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>Star Rotaractor</h4>
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>Awarded for maximum event participation in Q1 2026</p>
+                </div>
+              </div>
+              
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', padding: '12px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, #8E2DE2, #4A00E0)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                  <Award size={24} />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>Fundraising Champion</h4>
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>Raised over ₹10,000 for blood donation camp</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', alignItems: 'center', padding: '12px', borderRadius: '12px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'linear-gradient(135deg, #11998e, #38ef7d)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
+                  <User size={24} />
+                </div>
+                <div>
+                  <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-primary)' }}>Early Bird</h4>
+                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>Joined the club in its founding year</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div className="dashboard-card">
             <h3>Club Membership Dues</h3>
             
