@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
-import { authService, eventService } from '../data/mockDb';
+import { eventService, noticeService, taskService } from '../data/mockDb.js';
 import { ShieldAlert, UserCheck, CalendarCheck, Check, X, Send, ClipboardList } from 'lucide-react';
 import InitialsAvatar from './InitialsAvatar';
 
@@ -21,23 +21,38 @@ const AdminDashboard = () => {
     setTimeout(() => setToastMessage(''), 3000);
   };
 
-  const handleSendNotice = () => {
-    showToast(`Notice sent to ${noticeModal.user ? noticeModal.user.name : 'all members'}`);
-    setNoticeModal({ show: false, user: null, message: '' });
+  const handleSendNotice = async () => {
+    try {
+      await noticeService.createNotice({ title: 'Admin Notice', content: noticeModal.message });
+      showToast(`Notice sent to ${noticeModal.user ? noticeModal.user.name : 'all members'}`);
+      setNoticeModal({ show: false, user: null, message: '' });
+      triggerUpdate();
+    } catch (err) { alert(err.message); }
   };
 
-  const handleAssignTask = () => {
-    showToast(`Task assigned to ${taskModal.user ? taskModal.user.name : 'all members'}`);
-    setTaskModal({ show: false, user: null, title: '' });
+  const handleAssignTask = async () => {
+    try {
+      await taskService.createTask({
+        title: taskModal.title,
+        description: 'Assigned from directory',
+        assignedTo: taskModal.user ? taskModal.user.id : null,
+        endDate: new Date(Date.now() + 86400000 * 3).toISOString() // 3 days
+      });
+      showToast(`Task assigned to ${taskModal.user ? taskModal.user.name : 'all members'}`);
+      setTaskModal({ show: false, user: null, title: '' });
+      triggerUpdate();
+    } catch (err) { alert(err.message); }
   };
 
-  const handleToggleAttendance = (profileId, isChecked) => {
-    if (isChecked) {
-      eventService.markAttendance(selectedEventId, profileId, currentProfile.id);
-    } else {
-      eventService.unmarkAttendance(selectedEventId, profileId);
-    }
-    triggerUpdate();
+  const handleToggleAttendance = async (profileId, isChecked) => {
+    try {
+      if (isChecked) {
+        await eventService.markAttendance(selectedEventId, profileId);
+      } else {
+        await eventService.unmarkAttendance(selectedEventId, profileId);
+      }
+      triggerUpdate();
+    } catch (err) { alert(err.message); }
   };
 
   return (

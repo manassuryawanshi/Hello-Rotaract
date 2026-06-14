@@ -20,25 +20,29 @@ const TreasurerDashboard = () => {
   };
 
   // Get pending payment validations
-  const pendingRequests = paymentService.getPendingPayments();
+  const pendingRequests = payments || [];
 
-  const handleApprove = (paymentId) => {
+  const handleApprove = async (paymentId) => {
     if (window.confirm('Approve this membership payment? This will update their dues status to PAID.')) {
-      paymentService.verifyPayment(paymentId, true, currentProfile.id);
-      triggerUpdate();
+      try {
+        await paymentService.verifyPayment(paymentId, true);
+        triggerUpdate();
+      } catch(err) { alert(err.message); }
     }
   };
 
-  const handleRejectSubmit = (e) => {
+  const handleRejectSubmit = async (e) => {
     e.preventDefault();
     if (!remarks) {
       alert('Please provide rejection remarks.');
       return;
     }
-    paymentService.verifyPayment(rejectId, false, currentProfile.id, remarks);
-    setRejectId(null);
-    setRemarks('');
-    triggerUpdate();
+    try {
+      await paymentService.verifyPayment(rejectId, false, remarks);
+      setRejectId(null);
+      setRemarks('');
+      triggerUpdate();
+    } catch(err) { alert(err.message); }
   };
 
   return (

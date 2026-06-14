@@ -19,7 +19,7 @@ const EventsView = ({ setSelectedEvent }) => {
   const [selectedCoordinators, setSelectedCoordinators] = useState([currentProfile?.id]);
   const [error, setError] = useState('');
 
-  const handleCreateEvent = (e) => {
+  const handleCreateEvent = async (e) => {
     e.preventDefault();
     setError('');
     
@@ -34,7 +34,7 @@ const EventsView = ({ setSelectedEvent }) => {
     }
     
     try {
-      eventService.createEvent({
+      await eventService.createEvent({
         title,
         description,
         startTime: new Date(startTime).toISOString(),
@@ -44,7 +44,7 @@ const EventsView = ({ setSelectedEvent }) => {
         googleRulebookUrl: rulebookUrl || 'https://example.com/rules-book',
         meetLink: meetLink || 'https://meet.google.com',
         coordinators: selectedCoordinators
-      }, currentProfile.id);
+      });
       
       // Reset state
       setTitle('');

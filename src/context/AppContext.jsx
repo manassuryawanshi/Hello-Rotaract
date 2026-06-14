@@ -7,37 +7,42 @@ import {
   taskService, 
   noticeService, 
   notificationService,
+  fetchEvents,
+  fetchTasks,
+  fetchNotices,
+  fetchNotifications,
   getUsers,
   getProfiles,
-  getEvents,
-  getTasks,
-  getNotices,
   getAttendance,
-  getPayments,
-  getNotifications,
   getPreApprovedList
-} from '../data/mockDb';
+} from '../data/mockDb.js';
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
   const [currentUser, setCurrentUser] = useState(null);
   const [currentProfile, setCurrentProfile] = useState(null);
-  const [activeRole, setActiveRole] = useState('MEMBER'); // Toggleable roles: 'MEMBER', 'TREASURER', 'ADMIN'
-  const [activeTab, setActiveTab] = useState('home'); // 'home', 'events', 'analytics', 'profile', 'treasurer', 'admin'
+  const [activeRole, setActiveRole] = useState('MEMBER'); 
+  const [activeTab, setActiveTab] = useState('home'); 
   
-  // Custom Accents and Theme settings
   const [accentColor, setAccentColor] = useState('#d91c5c');
   const [theme, setTheme] = useState('light');
   
-  // Realtime Database-like triggers to reactively re-render components
   const [dbTrigger, setDbTrigger] = useState(0);
 
+  // Async DB States
+  const [events, setEvents] = useState([]);
+  const [tasks, setTasks] = useState([]);
+  const [notices, setNotices] = useState([]);
+  const [userNotifications, setUserNotifications] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [attendance, setAttendance] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [profiles, setProfiles] = useState([]);
+  const [preApprovedList, setPreApprovedList] = useState([]);
+
   useEffect(() => {
-    // Initialize DB
     initDb();
-    
-    // Check if session exists
     const session = authService.getCurrentSession();
     if (session) {
       setCurrentUser(session.user);
@@ -45,7 +50,6 @@ export const AppProvider = ({ children }) => {
       setActiveRole(session.user.role);
     }
     
-    // Load setting accents
     const storedAccent = localStorage.getItem('hr_accent');
     if (storedAccent) setAccentColor(storedAccent);
     
@@ -54,14 +58,45 @@ export const AppProvider = ({ children }) => {
     document.documentElement.setAttribute('data-theme', storedTheme);
   }, []);
 
+  // Fetch data asynchronously when user logs in or trigger fires
+  useEffect(() => {
+    const loadData = async () => {
+      if (!currentUser) return;
+      try {
+        const ev = await fetchEvents();
+        setEvents(ev || []);
+        
+        const ts = await fetchTasks();
+        setTasks(ts || []);
+        
+        const nt = await fetchNotices();
+        setNotices(nt || []);
+        
+        const notifs = await fetchNotifications();
+        setUserNotifications(notifs || []);
+        
+        if (activeRole === 'TREASURER' || activeRole === 'ADMIN') {
+          const pending = await paymentService.getPendingPayments();
+          setPayments(pending || []);
+        } else {
+          const dues = await paymentService.getMemberDues();
+          setPayments(dues ? [dues] : []);
+        }
+        
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      }
+    };
+    loadData();
+  }, [currentUser, dbTrigger, activeRole]);
+
   const triggerUpdate = () => {
     setDbTrigger(prev => prev + 1);
   };
 
-  // Auth Operations
-  const login = (emailOrRid, password) => {
+  const login = async (emailOrRid, password) => {
     try {
-      const session = authService.login(emailOrRid, password);
+      const session = await authService.login(emailOrRid, password);
       setCurrentUser(session.user);
       setCurrentProfile(session.profile);
       setActiveRole(session.user.role);
@@ -79,21 +114,19 @@ export const AppProvider = ({ children }) => {
     setActiveTab('home');
   };
 
-  const registerMember = (regData) => {
+  const registerMember = async (regData) => {
     try {
-      return authService.submitRegisterDetails(regData);
+      return await authService.submitRegisterDetails(regData);
     } catch (err) {
       throw err;
     }
   };
 
-  // Custom Debug Role Swapping (Allows showing user flow of other roles instantly)
   const swapRole = (role) => {
     setActiveRole(role);
     triggerUpdate();
   };
 
-  // Color / Theme Operations
   const changeAccent = (color) => {
     setAccentColor(color);
     localStorage.setItem('hr_accent', color);
@@ -113,38 +146,23 @@ export const AppProvider = ({ children }) => {
     document.documentElement.setAttribute('data-theme', newTheme);
   };
 
-  // Task Operations
-  const deleteTask = (taskId) => {
+  const deleteTask = async (taskId) => {
     try {
-      taskService.deleteTask(taskId, currentProfile.id);
+      await taskService.deleteTask(taskId);
       triggerUpdate();
     } catch (err) {
       alert(err.message);
     }
   };
 
-  // Notifications Operations
-  const markNotificationsAsRead = () => {
-    if (currentProfile) {
-      notificationService.markAllAsRead(currentProfile.id);
+  const markNotificationsAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
       triggerUpdate();
+    } catch (err) {
+      console.error(err);
     }
   };
-
-  // DB Sync Getters
-  const events = getEvents();
-  const tasks = getTasks();
-  const notices = getNotices();
-  const attendance = getAttendance();
-  const payments = getPayments();
-  const users = getUsers();
-  const profiles = getProfiles();
-  const preApprovedList = getPreApprovedList();
-  
-  // Reactively fetch user notifications
-  const userNotifications = currentProfile 
-    ? notificationService.getMemberNotifications(currentProfile.id)
-    : [];
 
   return (
     <AppContext.Provider value={{
@@ -166,7 +184,6 @@ export const AppProvider = ({ children }) => {
       userNotifications,
       dbTrigger,
       triggerUpdate,
-      // Shared DB states
       events,
       tasks,
       notices,
